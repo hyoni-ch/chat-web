@@ -60,12 +60,19 @@ io.on("connection", (socket) => {
 });
 
 process.on("SIGINT", () => {
-  console.log("서버가 종료됩니다. 사용자 데이터베이스를 초기화합니다.");
+  console.log("서버가 종료됩니다. 데이터베이스를 초기화합니다.");
   db.run("DELETE FROM users", (err) => {
     if (err) {
       console.error("사용자 테이블 삭제 오류:", err.message);
     } else {
       console.log("사용자 테이블의 모든 데이터 삭제 완료");
+    }
+  });
+  db.run("DELETE FROM messages", (err) => {
+    if (err) {
+      console.error("메시지 테이블 삭제 오류:", err.message);
+    } else {
+      console.log("메시지 테이블의 모든 데이터 삭제 완료");
     }
   });
 });
