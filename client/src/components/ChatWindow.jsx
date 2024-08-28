@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import NicknameModal from "./NicknameModal";
 
@@ -9,10 +9,23 @@ const ChatWindow = () => {
   const [showModal, setShowModal] = useState(true);
   const [nickname, setNickname] = useState("");
 
+  const scrollRef = useRef();
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
   useEffect(() => {
     const newSocket = io();
     setSocket(newSocket);
 
+    console.log(socket);
     newSocket.on("chat message", (msg) => {
       setMessages((prevMessages) => [...prevMessages, { text: msg.text, sender: msg.sender }]);
     });
@@ -46,13 +59,20 @@ const ChatWindow = () => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   if (showModal) {
     return <NicknameModal onSubmit={handleNicknameSubmit} />;
   }
 
   return (
     <div className="fixed bottom-20 right-4 w-96 rounded-md border shadow">
-      <ul className="p-4 h-96 overflow-y-auto">
+      <ul className="p-4 h-96 overflow-y-auto" ref={scrollRef}>
         {messages.map((msg, idx) => (
           <li
             key={idx}
@@ -63,7 +83,7 @@ const ChatWindow = () => {
             <div className="flex flex-col">
               <div className="text-xs">{msg.sender != nickname && msg.sender != "system" ? msg.sender : ""}</div>
               <div
-                className={`p-2 rounded-lg max-w-xs ${
+                className={`p-2 rounded-lg max-w-xs whitespace-pre-wrap ${
                   msg.sender === nickname
                     ? "bg-black text-white shadow"
                     : msg.sender === "system"
@@ -78,13 +98,15 @@ const ChatWindow = () => {
         ))}
       </ul>
       <form onSubmit={handleSubmit} className="p-4 border-t flex">
-        <input
-          type="text"
+        <textarea
           placeholder="메시지를 입력하세요"
           value={message}
-          className="w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-1 focus:ring-gray-700"
+          className="w-full px-3 py-2 border rounded-l-md h-auto focus:outline-none focus:ring-1 focus:ring-gray-700"
+          maxLength={200}
           onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
+
         <button
           type="submit"
           className="bg-black text-white px-4 py-2 rounded-r-md hover:bg-gray-950 transition duration-300 whitespace-nowrap"

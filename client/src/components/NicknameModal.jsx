@@ -47,7 +47,7 @@ const NicknameModal = ({ onSubmit }) => {
             <input
               type="text"
               placeholder="닉네임을 입력하세요"
-              maxlength="5"
+              maxLength="5"
               value={nickname}
               onChange={handleNicknameChange}
               className="shadow appearance-none border rounded px-3 text-gray-700 leading-tight"
