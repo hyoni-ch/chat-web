@@ -22,32 +22,30 @@ const ChatWindow = () => {
   };
 
   useEffect(() => {
-    const newSocket = io();
-    setSocket(newSocket);
+    if (socket) {
+      socket.on("chat message", (msg) => {
+        setMessages((prevMessages) => [...prevMessages, { text: msg.text, sender: msg.sender }]);
+      });
 
-    console.log(socket);
-    newSocket.on("chat message", (msg) => {
-      setMessages((prevMessages) => [...prevMessages, { text: msg.text, sender: msg.sender }]);
-    });
+      socket.on("user connected", (user) => {
+        setMessages((prevMessages) => [...prevMessages, { text: `${user}님이 입장하였습니다.`, sender: "system" }]);
+      });
 
-    newSocket.on("user connected", (user) => {
-      setMessages((prevMessages) => [...prevMessages, { text: `${user}님이 입장하였습니다.`, sender: "system" }]);
-    });
+      socket.on("user disconnected", (user) => {
+        setMessages((prevMessages) => [...prevMessages, { text: `${user}님이 나가셨습니다.`, sender: "system" }]);
+      });
 
-    newSocket.on("user disconnected", (user) => {
-      setMessages((prevMessages) => [...prevMessages, { text: `${user}님이 나가셨습니다.`, sender: "system" }]);
-    });
-
-    return () => {
-      if (newSocket) {
-        newSocket.disconnect();
-      }
-    };
-  }, []);
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [socket]);
 
   const handleNicknameSubmit = (nick) => {
+    const newSocket = io();
+    setSocket(newSocket);
     setNickname(nick);
-    socket.emit("set nickname", nick);
+    newSocket.emit("set nickname", nick);
     setShowModal(false);
   };
 
@@ -81,7 +79,7 @@ const ChatWindow = () => {
             }`}
           >
             <div className="flex flex-col">
-              <div className="text-xs">{msg.sender != nickname && msg.sender != "system" ? msg.sender : ""}</div>
+              <div className="text-xs">{msg.sender !== nickname && msg.sender !== "system" ? msg.sender : ""}</div>
               <div
                 className={`p-2 rounded-lg max-w-xs whitespace-pre-wrap ${
                   msg.sender === nickname
@@ -102,11 +100,10 @@ const ChatWindow = () => {
           placeholder="메시지를 입력하세요"
           value={message}
           className="w-full px-3 py-2 border rounded-l-md h-auto focus:outline-none focus:ring-1 focus:ring-gray-700"
-          maxLength={200}
+          maxLength={100}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-
         <button
           type="submit"
           className="bg-black text-white px-4 py-2 rounded-r-md hover:bg-gray-950 transition duration-300 whitespace-nowrap"
